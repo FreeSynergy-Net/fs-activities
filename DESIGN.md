@@ -3,6 +3,8 @@
 `fs-activity` observes what happens across programs (ADR 0020). This repo holds the **program core**, no GUI. Contract:
 `history.capnp` in `fs-interfaces` v0.20.0 or later (draft, provisional). Program docs: `fs-documentation/docs/en/programs/apps/history/`.
 
+The repo and crates were renamed from `fs-history` to `fs-activity` (ADR 0087), but types and contract keep the name "history" (`HistoryRepo`, `History`, `history.capnp`, capability IDs `history.*`, `PROGRAM = "history"`, MIME `vnd.freesynergy.history-*`): these names are part of the wire contract in `fs-interfaces` and other programs depend on them, so behaviour towards the outside stays the same and changing them needs its own decision.
+
 ## State
 
 Version 0.1.1. No capnp server and no GUI.
