@@ -1,9 +1,9 @@
-# fs-activity – Design
+# fs-activities – Design
 
-`fs-activity` observes what happens across programs (ADR 0020). This repo holds the **program core**, no GUI. Contract:
-`history.capnp` in `fs-interfaces` v0.20.0 or later (draft, provisional). Program docs: `fs-documentation/docs/en/programs/apps/history/`.
+`fs-activities` observes what happens across programs (ADR 0020). This repo holds the **program core**, no GUI. Contract:
+`history.capnp` in `fs-interfaces` v0.20.0 or later (draft, provisional). Program docs: `fs-documentation/docs/en/programs/apps/activities/`.
 
-The repo and crates were renamed from `fs-history` to `fs-activity` (ADR 0087), but types and contract keep the name "history" (`HistoryRepo`, `History`, `history.capnp`, capability IDs `history.*`, `PROGRAM = "history"`, MIME `vnd.freesynergy.history-*`): these names are part of the wire contract in `fs-interfaces` and other programs depend on them, so behaviour towards the outside stays the same and changing them needs its own decision.
+The repo and crates were renamed from `fs-history` to `fs-activity` and then to `fs-activities` (ADR 0087, plural rule), but types and contract keep the name "history" (`HistoryRepo`, `History`, `history.capnp`, capability IDs `history.*`, `PROGRAM = "history"`, MIME `vnd.freesynergy.history-*`): these names are part of the wire contract in `fs-interfaces` and other programs depend on them, so behaviour towards the outside stays the same and changing them needs its own decision.
 
 ## State
 
@@ -14,7 +14,7 @@ Version 0.1.1. No capnp server and no GUI.
 | Entries: derived index, unlogged, no payload; timeline, get, filters, keyset paging | done |
 | Digest | done |
 | Forget with tombstones, past only, salted filter texts | done |
-| Observer over the port `ActivitySource`; hub adapter `fs-activity-hub` against a real hub | done; at most 16 activities per pull until the hub's next tag |
+| Observer over the port `ActivitySource`; hub adapter `fs-activities-hub` against a real hub | done; at most 16 activities per pull until the hub's next tag |
 | `Relationship` and `SurveyResponse` never read | done |
 | Actor | empty; `originalActor` stays empty until the person releases it (strategy, in `hub.capnp`) |
 | Original time | receive time for now; `originalAt` comes with the next fs-hub tag |

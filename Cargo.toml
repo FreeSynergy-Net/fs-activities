@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/fs-activity-core", "crates/fs-activity-hub"]
+members = ["crates/fs-activities-core", "crates/fs-activities-hub"]
 
 [workspace.package]
 version = "0.0.1"
