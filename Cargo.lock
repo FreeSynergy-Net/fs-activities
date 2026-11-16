@@ -615,67 +615,12 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "fs-activities-core",
- "fs-hub",
- "fs-hub-client",
  "fs-objects",
+ "fs-registry",
+ "fs-registry-client",
  "serde_json",
  "tempfile",
  "tokio",
-]
-
-[[package]]
-name = "fs-hub"
-version = "0.0.1"
-source = "git+https://github.com/FreeSynergy/fs-hub?tag=v0.0.1#d80026896403641e55eabf0f79346f92ba06f69d"
-dependencies = [
- "async-trait",
- "capnp",
- "capnp-rpc",
- "chrono",
- "fs-hub-proto",
- "fs-interfaces",
- "fs-objects",
- "futures",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "fs-hub-client"
-version = "0.0.1"
-source = "git+https://github.com/FreeSynergy/fs-hub?tag=v0.0.1#d80026896403641e55eabf0f79346f92ba06f69d"
-dependencies = [
- "capnp",
- "capnp-rpc",
- "chrono",
- "fs-hub-proto",
- "fs-interfaces",
- "fs-objects",
- "futures",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-util",
-]
-
-[[package]]
-name = "fs-hub-proto"
-version = "0.0.1"
-source = "git+https://github.com/FreeSynergy/fs-hub?tag=v0.0.1#d80026896403641e55eabf0f79346f92ba06f69d"
-dependencies = [
- "capnp",
- "chrono",
- "fs-interfaces",
- "fs-objects",
- "serde",
- "serde_json",
- "thiserror",
- "uuid",
 ]
 
 [[package]]
@@ -709,6 +654,61 @@ dependencies = [
  "tokio",
  "turso",
  "unicode-normalization",
+ "uuid",
+]
+
+[[package]]
+name = "fs-registry"
+version = "0.0.2"
+source = "git+https://github.com/FreeSynergy/fs-registry?tag=v0.0.2#633f2288694e5cc46c7b60e527a00d78778e31ad"
+dependencies = [
+ "async-trait",
+ "capnp",
+ "capnp-rpc",
+ "chrono",
+ "fs-interfaces",
+ "fs-objects",
+ "fs-registry-proto",
+ "futures",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "fs-registry-client"
+version = "0.0.2"
+source = "git+https://github.com/FreeSynergy/fs-registry?tag=v0.0.2#633f2288694e5cc46c7b60e527a00d78778e31ad"
+dependencies = [
+ "capnp",
+ "capnp-rpc",
+ "chrono",
+ "fs-interfaces",
+ "fs-objects",
+ "fs-registry-proto",
+ "futures",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
+name = "fs-registry-proto"
+version = "0.0.2"
+source = "git+https://github.com/FreeSynergy/fs-registry?tag=v0.0.2#633f2288694e5cc46c7b60e527a00d78778e31ad"
+dependencies = [
+ "capnp",
+ "chrono",
+ "fs-interfaces",
+ "fs-objects",
+ "serde",
+ "serde_json",
+ "thiserror",
  "uuid",
 ]
 

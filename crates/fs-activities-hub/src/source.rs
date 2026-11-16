@@ -9,8 +9,8 @@
 
 use async_trait::async_trait;
 use fs_activities_core::{ActivitySource, Batch, Error, Result};
-use fs_hub_client::HubSession;
 use fs_objects::ObjectId;
+use fs_registry_client::HubSession;
 
 use crate::map::{summarise, to_core_id};
 

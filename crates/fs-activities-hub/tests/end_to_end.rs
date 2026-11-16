@@ -4,16 +4,16 @@ use std::sync::Arc;
 
 use fs_activities_core::{EntryFilter, HistoryRepo, Observer};
 use fs_activities_hub::{HubSource, manifest};
-use fs_hub::{Config, Daemon};
-use fs_hub_client::{HubSession, HubStatus, Manifest, connect_at};
 use fs_objects::Query;
 use fs_objects::traits::UnloggedObjects;
 use fs_objects::{Envelope, OpenOptions, Store, StoredObject, TursoStore as HubStore};
+use fs_registry::{Config, Daemon};
+use fs_registry_client::{HubSession, HubStatus, Manifest, connect_at};
 
 const SECRET: &str = "ada-secret@example.org";
 
 fn socket(dir: &tempfile::TempDir) -> std::path::PathBuf {
-    dir.path().join("run/freesynergy/hub.sock")
+    dir.path().join("run/freesynergy/registry.sock")
 }
 
 async fn program(dir: &tempfile::TempDir, m: Manifest) -> (HubSession, HubStore) {

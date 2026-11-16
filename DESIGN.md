@@ -17,7 +17,7 @@ Version 0.1.1. No capnp server and no GUI.
 | Observer over the port `ActivitySource`; hub adapter `fs-activities-hub` against a real hub | done; at most 16 activities per pull until the hub's next tag |
 | `Relationship` and `SurveyResponse` never read | done |
 | Actor | empty; `originalActor` stays empty until the person releases it (strategy, in `hub.capnp`) |
-| Original time | receive time for now; `originalAt` comes with the next fs-hub tag |
+| Original time | receive time for now; `originalAt` comes with the next fs-registry tag |
 | A dead hub session | not reconnected; the host starts a new one |
 | capnp server | not built; thread 3 |
 | Tests | 49, real stores and a real hub, the 80 MiB test included |

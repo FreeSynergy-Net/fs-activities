@@ -1,14 +1,14 @@
 //! History over the hub: connect, register, observe, print the timeline.
 //!
-//! Needs a running hub (`fs-hub`). Run with `cargo run -p fs-activities-hub --example demo`; without a
+//! Needs a running hub (`fs-registry`). Run with `cargo run -p fs-activities-hub --example demo`; without a
 //! hub it says so and ends (programs work alone, ADR 0019).
 
 use std::sync::Arc;
 
 use fs_activities_core::{EntryFilter, HistoryRepo, Observer};
 use fs_activities_hub::{HubSource, manifest};
-use fs_hub_client::{HubStatus, connect, offer_install};
 use fs_objects::TursoStore;
+use fs_registry_client::{HubStatus, connect, offer_install};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

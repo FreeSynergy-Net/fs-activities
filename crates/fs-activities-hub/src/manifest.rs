@@ -4,7 +4,7 @@
 //! `Reads`, so `Relationship` and `SurveyResponse` cannot get in. History writes nothing.
 
 use fs_activities_core::Reads;
-use fs_hub_client::Manifest;
+use fs_registry_client::Manifest;
 
 /// The program name history registers with.
 pub const PROGRAM: &str = "history";

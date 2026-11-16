@@ -4,9 +4,9 @@ use std::sync::Arc;
 
 use fs_activities_core::{EntryFilter, HistoryRepo, Observer};
 use fs_activities_hub::{HubSource, manifest};
-use fs_hub::{Config, Daemon};
-use fs_hub_client::{HubStatus, Manifest, connect_at};
 use fs_objects::{Envelope, OpenOptions, Store, StoredObject, TursoStore as HubStore};
+use fs_registry::{Config, Daemon};
+use fs_registry_client::{HubStatus, Manifest, connect_at};
 
 const NOTES: usize = 80;
 const MIB: usize = 1 << 20;
@@ -14,7 +14,7 @@ const MIB: usize = 1 << 20;
 #[tokio::test]
 async fn eighty_one_mib_notes_do_not_stick_the_ingest() {
     let dir = tempfile::tempdir().unwrap();
-    let socket = dir.path().join("run/freesynergy/hub.sock");
+    let socket = dir.path().join("run/freesynergy/registry.sock");
     let _hub = Daemon::spawn(Config::new(socket.clone(), dir.path().join("hub-data"))).unwrap();
 
     let wiki = Manifest::new("wiki", "0.1.0").write(&["Note"]);
@@ -56,7 +56,7 @@ async fn eighty_one_mib_notes_do_not_stick_the_ingest() {
     assert_eq!(page.items.len(), NOTES);
 }
 
-async fn connect(socket: &std::path::Path) -> fs_hub_client::HubSession {
+async fn connect(socket: &std::path::Path) -> fs_registry_client::HubSession {
     match connect_at(socket, manifest()).await.unwrap() {
         HubStatus::Connected(s) => s,
         HubStatus::Absent => panic!("hub should be there"),
