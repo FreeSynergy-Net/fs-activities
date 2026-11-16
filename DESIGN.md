@@ -1,6 +1,6 @@
-# fs-history – Design
+# fs-activity – Design
 
-`fs-history` observes what happens across programs (ADR 0020). This repo holds the **program core**, no GUI. Contract:
+`fs-activity` observes what happens across programs (ADR 0020). This repo holds the **program core**, no GUI. Contract:
 `history.capnp` in `fs-interfaces` v0.20.0 or later (draft, provisional). Program docs: `fs-documentation/docs/en/programs/apps/history/`.
 
 ## State
@@ -12,7 +12,7 @@ Version 0.1.1. No capnp server and no GUI.
 | Entries: derived index, unlogged, no payload; timeline, get, filters, keyset paging | done |
 | Digest | done |
 | Forget with tombstones, past only, salted filter texts | done |
-| Observer over the port `ActivitySource`; hub adapter `fs-history-hub` against a real hub | done; at most 16 activities per pull until the hub's next tag |
+| Observer over the port `ActivitySource`; hub adapter `fs-activity-hub` against a real hub | done; at most 16 activities per pull until the hub's next tag |
 | `Relationship` and `SurveyResponse` never read | done |
 | Actor | empty; `originalActor` stays empty until the person releases it (strategy, in `hub.capnp`) |
 | Original time | receive time for now; `originalAt` comes with the next fs-hub tag |
