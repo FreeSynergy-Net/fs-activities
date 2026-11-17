@@ -12,6 +12,8 @@ pub enum Link {
     Connected {
         /// The contract version the server reported.
         contract: String,
+        /// The capability ids the server offers (the example of the main view is gone once it offers `history`).
+        ids: Vec<String>,
     },
     /// The server speaks another contract version; the person is told, the window shows only what is planned.
     Mismatch(String),
@@ -37,6 +39,7 @@ impl Link {
         match answer {
             Ok(hello) => Self::Connected {
                 contract: hello.contract,
+                ids: hello.ids,
             },
             Err(error @ Error::Contract { .. }) => Self::Mismatch(error.to_string()),
             Err(other) => Self::Down(other.to_string()),

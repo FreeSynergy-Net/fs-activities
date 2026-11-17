@@ -5,12 +5,12 @@
 use std::path::PathBuf;
 
 /// The help text.
-pub const HELP: &str = "fs-activities-simple [--socket PATH] [--check] [--picture FILE.png [--size WIDTHxHEIGHT] [--screen start|coming]]\n\
+pub const HELP: &str = "fs-activities-simple [--socket PATH] [--check] [--picture FILE.png [--size WIDTHxHEIGHT] [--screen main|main-empty|start|coming]]\n\
 The standard frontend `simple` of FreeSynergy Activities. Start the program with `fs-activities`, not this one.\n\
   --socket PATH    the server's socket (default: $XDG_RUNTIME_DIR/freesynergy/activities.sock)\n\
   --check          only connect and check the contract version, then exit (0 fits, 3 contract differs, 1 no server)\n\
   --picture FILE   draw the window to a picture, without opening it\n\
-  --screen ID      the page to draw (start or coming; default start)\n\
+  --screen ID      the page to draw (main, main-empty, start or coming; default main)\n\
   --version, -V    print the version and exit\n\
   --help, -h       print this help and exit\n\
 Exit codes: 0 done, 1 failed, 2 wrong words, 3 the server's contract does not fit";
@@ -60,9 +60,11 @@ pub fn parse(words: &[String]) -> Result<Command, String> {
             "--picture" => picture = Some(PathBuf::from(value("--picture")?)),
             "--screen" => {
                 screen = Some(match value("--screen")?.as_str() {
+                    "main" => "main".to_owned(),
+                    "main-empty" => "main-empty".to_owned(),
                     "start" => "home".to_owned(),
                     "coming" => "coming".to_owned(),
-                    other => return Err(format!("--screen wants start or coming, not {other}")),
+                    other => return Err(format!("--screen wants main, main-empty, start or coming, not {other}")),
                 });
             }
             "--size" => size = parse_size(&value("--size")?)?,

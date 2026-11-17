@@ -8,9 +8,9 @@ What is different here: it keeps a summary, never the content. A diary text stay
 
 ## What it can do today
 
-Latest tag: `v0.0.1` (the core only; the tag of 0.0.2 is set at release). The version in this tree is `0.0.2` (program with a window, server and frontend).
+Latest tag: `v0.0.2` (program with a window, server and frontend; the main view is a marked preview with example data).
 
-- **A window and a server (new in 0.0.2).** `fs-activities` makes sure the server runs and opens the frontend `simple`: name, icon, what works today and what comes. Everything that does not work yet says "coming soon"; the filters "By me" and "By others" say openly "The source does not yet deliver who it was" instead of being greyed out silently. A missing server or one that does not fit is said in the window, never a grey window (the reason text of a missing server comes from the transport library and is English only for now: known, provisional). The window shows no activities yet: the core is not wired to it. Try `fs-activities --version`, `fs-activities --help`.
+- **A window and a server (new in 0.0.2).** `fs-activities` makes sure the server runs and opens the frontend `simple`: name, icon, what works today and what comes. Everything that does not work yet says "coming soon"; the filters "By me" and "By others" say openly "The source does not yet deliver who it was" instead of being greyed out silently. A missing server or one that does not fit is said in the window, never a grey window (the reason text of a missing server comes from the transport library and is English only for now: known, provisional). The window opens on a main view in the look of its models: filters on the left, search above, the days as an agenda; its rows are example data marked "Preview" ("Example A/B/C"), and they vanish as soon as the server offers real activities. No real activities yet: the core is not wired to the window. Try `fs-activities --version`, `fs-activities --help`.
 
 
 - A timeline of activities from other programs, newest first, with filters and paging.
@@ -23,7 +23,7 @@ Latest tag: `v0.0.1` (the core only; the tag of 0.0.2 is set at release). The ve
 
 ## What is not there yet
 
-- The window shows no timeline and nothing in it can be used yet; the server answers only what it offers (nothing yet) and the contract version. The server keeps running after the window closes until it is stopped or replaced (no lease).
+- The timeline in the window is a marked preview with example data; only the filter by program, the search and showing or hiding the example work; the server answers only what it offers (nothing yet) and the contract version. The server keeps running after the window closes until it is stopped or replaced (no lease).
 - Platform: Linux (Windows and macOS follow; the transport uses Unix sockets).
 - Who did something is empty for now, and the time is when the entry arrived, not necessarily when it happened (see DESIGN.md).
 - Forgetting covers this index only. The hub's own log is not touched.
@@ -50,7 +50,7 @@ Activities belongs to the project-management suite, and to anyone who wants to r
 
 **Eine Zeitleiste deiner eigenen Arbeit, ohne dass dich jemand beobachtet.** FreeSynergy Activities (früher History) merkt, was in deinen FreeSynergy-Programmen geschieht, und behält eine kurze Zeile je Ereignis. Es behält eine Zusammenfassung, nie den Inhalt; der Index gehört dir und bleibt lokal.
 
-**Was es heute kann.** Letzter Tag `v0.0.1` (nur der Kern). Der Stand in diesem Baum ist `0.0.2` (Programm mit Fenster, Server und Frontend). Der Kern (Zeitleiste, Filter, Zusammenfassungen, Vergessen, Hub-Anschluss) liegt als Bibliothek vor. Neu ist ein Fenster mit Server: `fs-activities` startet den Server und das Frontend `simple` mit Name, Symbol, „Was es heute kann“ und „Was kommt“. Was noch nicht geht, sagt „kommt noch“; die Filter „Von mir“ und „Von anderen“ sagen offen „Quelle liefert noch nicht, wer es war“. Fehlt der Server oder passt er nicht, steht das im Fenster (der Grund eines fehlenden Servers kommt aus der Transport-Bibliothek und ist vorläufig nur englisch). Das Fenster zeigt noch keine Aktivitäten, der Kern ist noch nicht daran angeschlossen; heute ist darin nichts bedienbar.
+**Was es heute kann.** Letzter Tag `v0.0.2` (Programm mit Fenster, Server und Frontend; die Hauptansicht ist eine gekennzeichnete Vorschau mit Beispieldaten). Der Kern (Zeitleiste, Filter, Zusammenfassungen, Vergessen, Hub-Anschluss) liegt als Bibliothek vor. Neu ist ein Fenster mit Server: `fs-activities` startet den Server und das Frontend `simple` mit Name, Symbol, „Was es heute kann“ und „Was kommt“. Was noch nicht geht, sagt „kommt noch“; die Filter „Von mir“ und „Von anderen“ sagen offen „Quelle liefert noch nicht, wer es war“. Fehlt der Server oder passt er nicht, steht das im Fenster (der Grund eines fehlenden Servers kommt aus der Transport-Bibliothek und ist vorläufig nur englisch). Das Fenster öffnet auf einer Hauptansicht im Aussehen der Vorbilder: links Filter, oben Suche, die Tage als Agenda; ihre Zeilen sind als „Vorschau“ gekennzeichnete Beispieldaten („Beispiel A/B/C“) und verschwinden, sobald der Server echte Aktivitäten anbietet. Echte Aktivitäten gibt es noch nicht, der Kern ist noch nicht am Fenster angeschlossen; bedienbar sind nur der Filter nach Programm, die Suche und das Ein- und Ausblenden des Beispiels.
 
 **Plattform.** Linux (Windows und macOS folgen).
 

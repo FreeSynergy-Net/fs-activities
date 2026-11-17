@@ -10,7 +10,7 @@ use fs_components_app::{WindowOptions, launch};
 
 use crate::cli::{Command, HELP, parse};
 use crate::link::Link;
-use crate::window::app;
+use crate::window::app_with;
 use crate::words::{session_locale, words};
 
 /// The exit code for "the server's contract does not fit": the starter reads it and starts the standard frontend instead.
@@ -59,7 +59,7 @@ fn check(socket: Option<PathBuf>) -> ExitCode {
         }
     };
     match Link::probe(&socket) {
-        Link::Connected { contract } => {
+        Link::Connected { contract, .. } => {
             println!("fs-activities-simple: the server speaks {contract}: fits");
             ExitCode::SUCCESS
         }
@@ -84,7 +84,12 @@ fn window(
         Ok(socket) => Link::probe(&socket),
         Err(m) => Link::of(Err(Error::Unreachable(m))),
     };
-    let widget = match app(&words(&session_locale()), &link) {
+    // `main-empty` is the main view with the example hidden (the picture of the empty state).
+    let (screen, example) = match screen {
+        Some("main-empty") => (Some("main"), false),
+        other => (other, true),
+    };
+    let widget = match app_with(&words(&session_locale()), &link, example) {
         Ok(widget) => widget,
         Err(e) => {
             eprintln!("fs-activities-simple: {e}");

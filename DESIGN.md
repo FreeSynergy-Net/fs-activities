@@ -67,18 +67,25 @@ Engine and frontend are separate processes (ADR 0021, ADR 0094 draft). Pattern m
 |---|---|---|
 | `fs-activities-server` | `history.capnp` 0.1 over a local socket (`fs-rpc` v0.0.2); `capabilities` (a `CapabilityList`: no ids, the contract version `0.1`, named by the server because the core has none) and `supportReport`; the rest is `unimplemented` | Adapter |
 | `fs-activities-client` | `Hello::fetch`: handshake (`Control.version`, replace a server that differs), `capabilities`, contract check | Template method |
-| `fs-activities-simple` | frontend `simple`, a process; depends only on the client and fs-components v0.0.25; window = name, icon, what works today, what comes (all locked, "coming soon") | Adapter, Builder |
+| `fs-activities-simple` | frontend `simple`, a process; depends only on the client and fs-components v0.0.25; window = main view (timeline as a marked preview), start with name and icon, what comes (all locked, "coming soon") | Adapter, Builder |
 | `fs-activities-bin` | command `fs-activities`: starter (server, `--check`, fallback to `simple`), `serve`, `--version`, `--help` | Facade, Strategy |
 
-Contract rule (ADR 0094 draft, item 4): same main level, minor level of the server not lower; a frontend exits with 3 and a message when it does not fit; the starter says so and opens the standard frontend. Not done, on purpose: no wiring of the core to the server (the window shows no timeline), no lease (the server runs until stopped or replaced). Contract: draft (`history.capnp`, not locked). The basics are released with this draft contract. The name `activities.capnp` does not exist in `fs-interfaces` v0.0.27: the contract file is `history.capnp` (interface `History`, capability key `history`).
+Contract rule (ADR 0094 draft, item 4): same main level, minor level of the server not lower; a frontend exits with 3 and a message when it does not fit; the starter says so and opens the standard frontend. Not done, on purpose: no wiring of the core to the server (the main view shows example data, marked "Preview"), no lease (the server runs until stopped or replaced). Contract: draft (`history.capnp`, not locked). The basics are released with this draft contract. The name `activities.capnp` does not exist in `fs-interfaces` v0.0.27: the contract file is `history.capnp` (interface `History`, capability key `history`).
 
 Decisions for the window (owner, 2026-11-17): the filter "By me / By others" is wanted; as long as the hub does not deliver who did it, it says openly "The source does not yet deliver who it was" (menu entry with the reason, never silently greyed out). The feed of the own timeline is Atom (the standard), opt-in, stage "later".
 
 ### Gaps (components that do not exist yet; the nearest existing one stands in, marked "provisional")
 
-- Timeline widget (day groups, loading more): provisional a text list of the shared text view.
+- Timeline widget (M11: symbol per program, summary that opens, newest first, loading more): provisional the agenda of the `calendar-view` with day groups (oldest day first, 30 days from the first day, the program as a mark and a colour) and the summary as one row with the text "4 more changes". Component of the main view, all from fs-components v0.0.25: `calendar-view` agenda, `search-field`, buttons for the filters, `states::Alert` (the "Preview" marker, info) and `states::EmptyState`.
+- Filters as a segmented control (`fields/controls/segmented`, not a dependency of this program at v0.0.25): provisional buttons with a mark in the word.
+- "Preview" marker as its own block (`preview-notice`): provisional an `Alert` of the step info with the action "Hide example" / "Show example".
+- Windows and macOS: Linux only for now (Windows and macOS follow).
 - Date-range picker: provisional none; the period filter is listed under "what comes".
 - Command model, shortcuts, context menu, tree for summaries (PLAN-components-menue M1 to M5): provisional locked menu entries with a reason.
 - Calendar heat map (later): none.
 - Error text of a missing server comes from `fs-rpc` in English: known, provisional.
 - Hub: `fs-activities-hub` is excluded from the workspace (`exclude` in `Cargo.toml`): `fs-registry-client` v0.0.2, the newest tag, still pins fs-interfaces v0.0.1 and fs-objects v0.0.1 (two sources per library, check_lock_sources red). It returns to the workspace with a registry tag that pins the current libraries; the basics do not use it.
+
+### Main view and example data
+
+`fs-activities-simple/src/preview.rs` is the only place with example data (typed rows, ids `preview:N`, names "Example A/B/C", no real person; a test greps the other sources). `mode(capabilities)` is `Live` exactly when the server offers `history`; then the example and the marker are gone and the main view shows the empty state until the client can read activities. Tests: mode, marker only in preview, filter and search, example only in `preview.rs`; mutants: mode always preview, marker always on, example in live.

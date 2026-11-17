@@ -14,6 +14,8 @@
 mod cli;
 mod content;
 mod link;
+mod main_view;
+mod preview;
 mod run;
 mod window;
 mod words;
@@ -21,5 +23,7 @@ mod words;
 pub use cli::{Command, HELP, parse};
 pub use content::{blocks, coming, start};
 pub use link::Link;
+pub use main_view::{Filter, Main, Notice, notice, visible};
+pub use preview::{CAPABILITY, ENTRIES, Entry, ID_PREFIX, Mode, Program, mode};
 pub use run::{EXIT_CONTRACT, run};
 pub use words::{TEXTS, words};

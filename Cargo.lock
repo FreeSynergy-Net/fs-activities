@@ -1422,6 +1422,7 @@ dependencies = [
  "fs-components",
  "fs-components-app",
  "fs-components-mf2",
+ "fs-components-primitives",
  "fs-components-widgets",
  "fs-components-words",
  "tempfile",

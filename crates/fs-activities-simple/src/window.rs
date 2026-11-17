@@ -13,6 +13,8 @@ use fs_components_words::{Args, Words};
 
 use crate::content::{coming, start};
 use crate::link::Link;
+use crate::main_view::Main;
+use crate::preview::Mode;
 
 /// The icon of the program, embedded in the binary.
 const ICON: &[u8] = include_bytes!("../assets/fs-activities.png");
@@ -25,7 +27,16 @@ fn icon_uri() -> String {
     )
 }
 
-/// The one screen of the window.
+/// Width of the box of the title, in pixels (the text view spreads over what it gets; a narrow box keeps the title at the icon).
+const TITLE_WIDTH: f32 = 340.0;
+
+/// How far the title box is pulled to the icon (Blinc counts margins in units of 4 px; the text view keeps room on its own left).
+const TITLE_PULL: f32 = 13.0;
+
+/// Side of the icon in the window, in pixels.
+const ICON_SIZE: f32 = 64.0;
+
+/// The start and the "what comes" screen.
 struct Home {
     name: String,
     tagline: String,
@@ -37,25 +48,25 @@ struct Home {
 impl Surface for Home {
     fn build(&self, _width: f32, _height: f32) -> Box<dyn Element> {
         // The icon of the program (own design, embedded; see packaging/ICON.md), as a data address Blinc loads.
-        let icon = image(icon_uri()).size(96.0, 96.0).no_fade();
-        let heading = TextView::new(vec![
-            Block::Heading {
+        let icon = image(icon_uri()).size(ICON_SIZE, ICON_SIZE).no_fade();
+        let title = div().w(TITLE_WIDTH).ml(-TITLE_PULL).child(
+            TextView::new(vec![Block::Heading {
                 level: 1,
                 text: Inline::plain(self.name.as_str()),
-            },
-            Block::Paragraph(Inline::plain(self.tagline.as_str())),
-        ])
-        .build();
+            }])
+            .build(),
+        );
         let header = div()
             .flex_row()
             .items_center()
             .gap(16.0)
             .child(icon)
-            .child(heading);
+            .child(title);
+        let goal = TextView::new(vec![Block::Paragraph(Inline::plain(self.tagline.as_str()))]).build();
         let body = TextView::new(self.body.clone()).build();
         let page = div().flex_col().gap(12.0).p(24.0);
         Box::new(if self.header {
-            page.child(header).child(body)
+            page.child(header).child(goal).child(body)
         } else {
             page.child(body)
         })
@@ -71,6 +82,20 @@ impl Surface for Home {
 /// # Errors
 /// The shell could not be made (a name that is empty, for example).
 pub fn app(texts: &Mf2Texts, link: &Link) -> Result<AppWidget, AppError> {
+    app_with(texts, link, true)
+}
+
+/// As [`app`], with the example of the main view shown (`true`) or hidden (`false`, the empty state).
+///
+/// # Errors
+/// The shell could not be made (a name that is empty, for example).
+pub fn app_with(texts: &Mf2Texts, link: &Link, example: bool) -> Result<AppWidget, AppError> {
+    let ids: &[String] = match link {
+        Link::Connected { ids, .. } => ids,
+        Link::Mismatch(_) | Link::Down(_) => &[],
+    };
+    let main = Main::new(texts, ids, example);
+    let preview = main.mode() == Mode::Preview;
     let say = |id: &str| texts.say(&id.into(), &Args::new()).text().to_owned();
     let soon = say("soon");
     let page = |header: bool, body: Vec<Block>| {
@@ -81,9 +106,15 @@ pub fn app(texts: &Mf2Texts, link: &Link) -> Result<AppWidget, AppError> {
             header,
         })
     };
+    let title = if preview {
+        format!("{} {}", say("app-name"), say("title-preview"))
+    } else {
+        say("app-name")
+    };
     let widget = AppWidget::new(
-        say("app-name"),
+        title,
         vec![
+            Screen::new("main", say("screen-main"), Arc::new(main)),
             Screen::new("home", say("screen-start"), page(true, start(texts, link))),
             Screen::new("coming", say("screen-coming"), page(false, coming(texts))),
         ],

@@ -38,7 +38,7 @@ fn list(items: Vec<String>) -> Block {
 #[must_use]
 pub fn start(texts: &Mf2Texts, link: &Link) -> Vec<Block> {
     let (state, hint) = match link {
-        Link::Connected { contract } => (
+        Link::Connected { contract, .. } => (
             say(
                 texts,
                 "state-connected",
@@ -134,6 +134,7 @@ mod tests {
             &texts,
             &Link::Connected {
                 contract: "c".into(),
+                ids: vec![],
             },
         ));
         assert_eq!(said.matches("coming soon").count(), COMING - OPEN.len());
@@ -164,6 +165,7 @@ mod tests {
             &texts,
             &Link::Connected {
                 contract: "c".into(),
+                ids: vec![],
             },
         ));
         assert!(said.contains("pausing the recording") && said.contains("no promise"));
