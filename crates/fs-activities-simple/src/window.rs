@@ -2,10 +2,11 @@
 //!
 //! Pattern: Adapter: our blocks in, a screen of the fs-components shell out; no widget is painted by hand.
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use fs_components::blinc::layout::div::div;
 use fs_components::blinc::layout::image::image;
+use fs_components::blinc::layout::widgets::scroll::{Scroll, ScrollPhysics};
 use fs_components_app::{AppError, AppWidget, Element, Menu, MenuEntry, Screen, Status, Surface};
 use fs_components_mf2::Mf2Texts;
 use fs_components_widgets::{Block, Inline, TextView, styles};
@@ -46,7 +47,7 @@ struct Home {
 }
 
 impl Surface for Home {
-    fn build(&self, _width: f32, _height: f32) -> Box<dyn Element> {
+    fn build(&self, width: f32, height: f32) -> Box<dyn Element> {
         // The icon of the program (own design, embedded; see packaging/ICON.md), as a data address Blinc loads.
         let icon = image(icon_uri()).size(ICON_SIZE, ICON_SIZE).no_fade();
         let title = div().w(TITLE_WIDTH).ml(-TITLE_PULL).child(
@@ -62,14 +63,29 @@ impl Surface for Home {
             .gap(16.0)
             .child(icon)
             .child(title);
-        let goal = TextView::new(vec![Block::Paragraph(Inline::plain(self.tagline.as_str()))]).build();
+        let goal =
+            TextView::new(vec![Block::Paragraph(Inline::plain(self.tagline.as_str()))]).build();
         let body = TextView::new(self.body.clone()).build();
-        let page = div().flex_col().gap(12.0).p(24.0);
-        Box::new(if self.header {
+        let page = div()
+            .flex_col()
+            .gap(4.0)
+            .p(24.0)
+            .w((width - 40.0).max(200.0));
+        let column = if self.header {
             page.child(header).child(goal).child(body)
         } else {
             page.child(body)
-        })
+        };
+        // The page scrolls when it is longer than the window, so nothing is cut off at the bottom.
+        let physics = Arc::new(Mutex::new(ScrollPhysics::default()));
+        Box::new(
+            div().w(width).h(height).child(
+                Scroll::with_physics(physics)
+                    .w(width)
+                    .h(height)
+                    .content(column),
+            ),
+        )
     }
 
     fn styles(&self) -> String {
@@ -77,19 +93,12 @@ impl Surface for Home {
     }
 }
 
-/// The window for `link`, with the menus whose entries are all locked ("coming soon").
+/// The window for `link`, with the menus whose entries are all locked ("coming soon"); the example of the main view is shown
+/// (`true`) or hidden (`false`, the empty state).
 ///
 /// # Errors
 /// The shell could not be made (a name that is empty, for example).
-pub fn app(texts: &Mf2Texts, link: &Link) -> Result<AppWidget, AppError> {
-    app_with(texts, link, true)
-}
-
-/// As [`app`], with the example of the main view shown (`true`) or hidden (`false`, the empty state).
-///
-/// # Errors
-/// The shell could not be made (a name that is empty, for example).
-pub fn app_with(texts: &Mf2Texts, link: &Link, example: bool) -> Result<AppWidget, AppError> {
+pub fn app(texts: &Mf2Texts, link: &Link, example: bool) -> Result<AppWidget, AppError> {
     let ids: &[String] = match link {
         Link::Connected { ids, .. } => ids,
         Link::Mismatch(_) | Link::Down(_) => &[],

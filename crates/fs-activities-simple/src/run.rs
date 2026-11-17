@@ -10,7 +10,7 @@ use fs_components_app::{WindowOptions, launch};
 
 use crate::cli::{Command, HELP, parse};
 use crate::link::Link;
-use crate::window::app_with;
+use crate::window::app;
 use crate::words::{session_locale, words};
 
 /// The exit code for "the server's contract does not fit": the starter reads it and starts the standard frontend instead.
@@ -89,7 +89,7 @@ fn window(
         Some("main-empty") => (Some("main"), false),
         other => (other, true),
     };
-    let widget = match app_with(&words(&session_locale()), &link, example) {
+    let widget = match app(&words(&session_locale()), &link, example) {
         Ok(widget) => widget,
         Err(e) => {
             eprintln!("fs-activities-simple: {e}");

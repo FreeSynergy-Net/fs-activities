@@ -20,131 +20,22 @@ use fs_components_app::Surface;
 use fs_components_mf2::Mf2Texts;
 use fs_components_primitives::SearchField;
 use fs_components_widgets::states::{Alert, EmptyState, Severity};
-use fs_components_widgets::{
-    CalendarItem, CalendarNames, CalendarView, Element, ViewRange, styles,
-};
+use fs_components_widgets::{CalendarItem, Element, styles};
 
-use crate::preview::{Mode, Program, mode, newest_day, oldest_day, rows};
+use crate::filter::{Filter, Notice, notice, visible};
+use crate::labels::Labels;
+use crate::preview::{Mode, Program, mode, rows};
+use crate::timeline::agenda;
 
 /// Width of the column of filters.
 const LEFT: f32 = 210.0;
+/// Padding of the page in pixels (Blinc counts padding in units of 4 px).
 const PAD: f32 = 16.0;
+/// Gap between blocks in pixels (Blinc counts gaps in units of 4 px).
 const GAP: f32 = 12.0;
 /// What the marker above the timeline needs, and the search field; the agenda gets the rest.
 const NOTICE_HEIGHT: f32 = 100.0;
 const SEARCH_HEIGHT: f32 = 40.0;
-
-/// What the person has chosen in the filters and typed in the search.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Filter {
-    /// Only this program, or all.
-    pub program: Option<Program>,
-    /// Words that must be in the text (any case); empty means no search.
-    pub query: String,
-}
-
-impl Filter {
-    /// Whether nothing is filtered.
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.program.is_none() && self.query.trim().is_empty()
-    }
-}
-
-/// The marker at the top of the view.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Notice {
-    /// "Preview": the rows are example data; the button hides them.
-    Shown,
-    /// "Preview": the example is hidden (the empty state shows); the button shows it again.
-    Hidden,
-}
-
-/// The marker for this state: there is one exactly while the example data are the data (mode [`Mode::Preview`]).
-#[must_use]
-pub fn notice(mode: Mode, example: bool) -> Option<Notice> {
-    match (mode, example) {
-        (Mode::Live, _) => None,
-        (Mode::Preview, true) => Some(Notice::Shown),
-        (Mode::Preview, false) => Some(Notice::Hidden),
-    }
-}
-
-/// The rows to draw: the example while in preview and not hidden, never in live mode (the client cannot read the server's
-/// activities yet, so live shows none); narrowed by the program and by the words of the search.
-#[must_use]
-pub fn visible(
-    mode: Mode,
-    example: bool,
-    all: &[(Program, CalendarItem)],
-    filter: &Filter,
-) -> Vec<CalendarItem> {
-    if mode != Mode::Preview || !example {
-        return Vec::new();
-    }
-    let query = filter.query.trim().to_lowercase();
-    all.iter()
-        .filter(|(program, _)| filter.program.is_none_or(|p| p == *program))
-        .filter(|(_, item)| query.is_empty() || item.title.to_lowercase().contains(&query))
-        .map(|(_, item)| item.clone())
-        .collect()
-}
-
-/// The words of the view, read once.
-struct Labels {
-    preview_title: String,
-    preview_text: String,
-    preview_hidden: String,
-    hide: String,
-    show: String,
-    filter: String,
-    all: String,
-    programs: Vec<(Program, String)>,
-    mine: String,
-    others: String,
-    why: String,
-    search: String,
-    empty_title: String,
-    empty_text: String,
-    nothing_title: String,
-    nothing_text: String,
-    reset: String,
-    names: Arc<CalendarNames>,
-}
-
-impl Labels {
-    fn read(texts: &Mf2Texts) -> Self {
-        let names = CalendarNames::new(
-            std::array::from_fn(|i| texts.plain(&format!("weekday-{}", i + 1))),
-            std::array::from_fn(|i| texts.plain(&format!("month-{}", i + 1))),
-            texts.plain("agenda-all-day"),
-            texts.plain("agenda-empty"),
-        );
-        Self {
-            preview_title: texts.plain("preview-title"),
-            preview_text: texts.plain("preview-text"),
-            preview_hidden: texts.plain("preview-hidden-text"),
-            hide: texts.plain("preview-hide"),
-            show: texts.plain("preview-show"),
-            filter: texts.plain("filter-title"),
-            all: texts.plain("filter-all"),
-            programs: Program::ALL
-                .iter()
-                .map(|p| (*p, texts.plain(p.word())))
-                .collect(),
-            mine: texts.plain("filter-mine"),
-            others: texts.plain("filter-others"),
-            why: texts.plain("who-missing"),
-            search: texts.plain("search-placeholder"),
-            empty_title: texts.plain("empty-title"),
-            empty_text: texts.plain("empty-text"),
-            nothing_title: texts.plain("nothing-title"),
-            nothing_text: texts.plain("nothing-text"),
-            reset: texts.plain("nothing-reset"),
-            names: Arc::new(names),
-        }
-    }
-}
 
 #[derive(Clone, Default)]
 struct State {
@@ -264,7 +155,7 @@ impl Main {
         let key = format!("filter-{key}");
         div()
             .flex_col()
-            .gap(2.0)
+            .gap(0.5)
             .child(
                 div().child(
                     ButtonBuilder::with_key(key.clone(), label.to_owned())
@@ -281,7 +172,7 @@ impl Main {
     fn filters(&self, filter: &Filter) -> Div {
         let mut column = div()
             .flex_col()
-            .gap(6.0)
+            .gap(1.5)
             .w(LEFT)
             .flex_shrink_0()
             .child(text(self.labels.filter.clone()))
@@ -315,7 +206,7 @@ impl Main {
     }
 
     /// The agenda, or the empty state that says why there is none.
-    fn body(&self, filter: &Filter, items: Vec<CalendarItem>, size: (f32, f32)) -> Div {
+    fn body(&self, filter: &Filter, items: &[CalendarItem], size: (f32, f32)) -> Div {
         if items.is_empty() {
             let state = Arc::clone(&self.state);
             let example = locked(&self.state).example;
@@ -335,15 +226,7 @@ impl Main {
             };
             return div().w(size.0).h(size.1).child(empty.build());
         }
-        CalendarView::new(
-            ViewRange::Agenda,
-            oldest_day(),
-            Arc::clone(&self.labels.names),
-            Arc::new(items),
-        )
-        .today(newest_day())
-        .named("activities")
-        .build(size.0, size.1)
+        agenda(&self.labels.names, items, size)
     }
 }
 
@@ -358,21 +241,26 @@ impl Surface for Main {
         let right_width = (width - 2.0 * PAD - LEFT - GAP).max(0.0);
         let used = 2.0 * PAD + SEARCH_HEIGHT + GAP + marker.map_or(0.0, |_| NOTICE_HEIGHT + GAP);
         let body_size = (right_width, (height - used).max(120.0));
-        let mut page = div().flex_col().gap(GAP).p(PAD).w(width).h(height);
+        let mut page = div()
+            .flex_col()
+            .gap(GAP / 4.0)
+            .p(PAD / 4.0)
+            .w(width)
+            .h(height);
         if let Some(kind) = marker {
             page = page.child(self.marker(kind));
         }
         let timeline = div()
             .flex_col()
-            .gap(GAP)
+            .gap(GAP / 4.0)
             .w(right_width)
             .child(self.search(&filter))
-            .child(self.body(&filter, items, body_size));
+            .child(self.body(&filter, &items, body_size));
         Box::new(
             page.child(
                 div()
                     .flex_row()
-                    .gap(GAP)
+                    .gap(GAP / 4.0)
                     .child(self.filters(&filter))
                     .child(timeline),
             ),
@@ -381,78 +269,5 @@ impl Surface for Main {
 
     fn styles(&self) -> String {
         styles()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Filter, Main, Notice, notice, visible};
-    use crate::preview::{Mode, Program};
-    use crate::words::words;
-    use fs_components_words::Locale;
-
-    fn main(caps: &[&str], example: bool) -> Main {
-        let caps: Vec<String> = caps.iter().map(|s| (*s).to_owned()).collect();
-        Main::new(&words(&Locale::english()), &caps, example)
-    }
-
-    #[test]
-    fn the_marker_exists_exactly_in_preview_mode() {
-        assert_eq!(notice(Mode::Preview, true), Some(Notice::Shown));
-        assert_eq!(notice(Mode::Preview, false), Some(Notice::Hidden));
-        assert_eq!(notice(Mode::Live, true), None);
-        assert_eq!(notice(Mode::Live, false), None);
-    }
-
-    #[test]
-    fn the_example_is_there_without_the_capability_and_gone_with_it() {
-        let preview = main(&[], true);
-        assert_eq!(preview.mode(), Mode::Preview);
-        assert_eq!(preview.items().len(), 12);
-        assert_eq!(preview.notice(), Some(Notice::Shown));
-        let live = main(&["history"], true);
-        assert_eq!(live.mode(), Mode::Live);
-        assert!(live.items().is_empty(), "no example once the server delivers");
-        assert_eq!(live.notice(), None);
-    }
-
-    #[test]
-    fn hiding_the_example_shows_the_empty_state_and_the_marker_stays() {
-        let view = main(&[], true);
-        view.set_example(false);
-        assert!(view.items().is_empty());
-        assert_eq!(view.notice(), Some(Notice::Hidden));
-        view.set_example(true);
-        assert_eq!(view.items().len(), 12);
-    }
-
-    #[test]
-    fn the_filter_narrows_by_program_and_by_words() {
-        let view = main(&[], true);
-        view.set_filter(Filter {
-            program: Some(Program::Texts),
-            query: String::new(),
-        });
-        let texts = view.items();
-        assert_eq!(texts.len(), 4);
-        assert!(texts.iter().all(|i| i.marks.iter().any(|m| m == "Texts")));
-        view.set_filter(Filter {
-            program: None,
-            query: "  FOLDER ".into(),
-        });
-        assert_eq!(view.items().len(), 1);
-        view.set_filter(Filter {
-            program: Some(Program::Tasks),
-            query: "folder".into(),
-        });
-        assert!(view.items().is_empty());
-    }
-
-    #[test]
-    fn nothing_is_filtered_by_default() {
-        assert!(Filter::default().is_empty());
-        assert!(
-            visible(Mode::Live, true, &[], &Filter::default()).is_empty()
-        );
     }
 }

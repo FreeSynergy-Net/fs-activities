@@ -76,7 +76,7 @@ Decisions for the window (owner, 2026-11-17): the filter "By me / By others" is 
 
 ### Gaps (components that do not exist yet; the nearest existing one stands in, marked "provisional")
 
-- Timeline widget (M11: symbol per program, summary that opens, newest first, loading more): provisional the agenda of the `calendar-view` with day groups (oldest day first, 30 days from the first day, the program as a mark and a colour) and the summary as one row with the text "4 more changes". Component of the main view, all from fs-components v0.0.25: `calendar-view` agenda, `search-field`, buttons for the filters, `states::Alert` (the "Preview" marker, info) and `states::EmptyState`.
+- Timeline widget (M11: symbol per program, summary that opens, loading more): provisional an own list of day groups with the classes of the `calendar-view` agenda (same look), the program as a mark and a colour, the summary as one row with the text "4 more changes". Order: newest day first and the newest row first inside a day, made in `main_view.rs` (`newest_first`): calendar_view braucht Option absteigend; M11 bekommt das als Pflicht. Other blocks of the main view, all from fs-components v0.0.25: `search-field`, buttons for the filters, `states::Alert` (the "Preview" marker, info) and `states::EmptyState`.
 - Filters as a segmented control (`fields/controls/segmented`, not a dependency of this program at v0.0.25): provisional buttons with a mark in the word.
 - "Preview" marker as its own block (`preview-notice`): provisional an `Alert` of the step info with the action "Hide example" / "Show example".
 - Windows and macOS: Linux only for now (Windows and macOS follow).

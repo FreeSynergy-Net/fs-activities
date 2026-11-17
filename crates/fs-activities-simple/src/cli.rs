@@ -64,7 +64,11 @@ pub fn parse(words: &[String]) -> Result<Command, String> {
                     "main-empty" => "main-empty".to_owned(),
                     "start" => "home".to_owned(),
                     "coming" => "coming".to_owned(),
-                    other => return Err(format!("--screen wants main, main-empty, start or coming, not {other}")),
+                    other => {
+                        return Err(format!(
+                            "--screen wants main, main-empty, start or coming, not {other}"
+                        ));
+                    }
                 });
             }
             "--size" => size = parse_size(&value("--size")?)?,

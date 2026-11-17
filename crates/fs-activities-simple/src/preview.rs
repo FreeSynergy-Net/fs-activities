@@ -149,11 +149,7 @@ pub fn rows(texts: &Mf2Texts) -> Vec<(Program, CalendarItem)> {
     ENTRIES
         .iter()
         .map(|e| {
-            let at = Moment::at(
-                oldest_day().add_days(i64::from(e.day)),
-                e.at.0,
-                e.at.1,
-            );
+            let at = Moment::at(oldest_day().add_days(i64::from(e.day)), e.at.0, e.at.1);
             let item = CalendarItem::timed(e.id, texts.plain(e.text), at, at)
                 .marked(example.clone())
                 .marked(texts.plain(e.program.word()))
