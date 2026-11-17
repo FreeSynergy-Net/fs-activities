@@ -7,16 +7,17 @@ use std::sync::Arc;
 use fs_components_mf2::Mf2Texts;
 use fs_components_widgets::CalendarNames;
 
+use crate::filter::View;
 use crate::preview::Program;
 
 /// The words of the view, read once.
+#[derive(Clone)]
 pub struct Labels {
     pub preview_title: String,
     pub preview_text: String,
     pub preview_hidden: String,
     pub hide: String,
     pub show: String,
-    pub filter: String,
     pub all: String,
     pub programs: Vec<(Program, String)>,
     pub mine: String,
@@ -28,6 +29,9 @@ pub struct Labels {
     pub nothing_title: String,
     pub nothing_text: String,
     pub reset: String,
+    pub today: String,
+    pub yesterday: String,
+    pub who_text: String,
     pub names: Arc<CalendarNames>,
 }
 
@@ -47,7 +51,6 @@ impl Labels {
             preview_hidden: texts.plain("preview-hidden-text"),
             hide: texts.plain("preview-hide"),
             show: texts.plain("preview-show"),
-            filter: texts.plain("filter-title"),
             all: texts.plain("filter-all"),
             programs: Program::ALL
                 .iter()
@@ -62,7 +65,27 @@ impl Labels {
             nothing_title: texts.plain("nothing-title"),
             nothing_text: texts.plain("nothing-text"),
             reset: texts.plain("nothing-reset"),
+            today: texts.plain("day-today"),
+            yesterday: texts.plain("day-yesterday"),
+            who_text: texts.plain("who-text"),
             names: Arc::new(names),
+        }
+    }
+}
+
+impl Labels {
+    /// The name of a view of the navigation.
+    #[must_use]
+    pub fn view_name(&self, view: View) -> &str {
+        match view {
+            View::All => &self.all,
+            View::ByMe => &self.mine,
+            View::ByOthers => &self.others,
+            View::Program(p) => self
+                .programs
+                .iter()
+                .find(|(q, _)| *q == p)
+                .map_or("", |(_, name)| name.as_str()),
         }
     }
 }

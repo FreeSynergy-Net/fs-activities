@@ -13,9 +13,10 @@ use fs_components_widgets::{Block, Inline, TextView, styles};
 use fs_components_words::{Args, Words};
 
 use crate::content::{coming, start};
+use crate::filter::View;
 use crate::link::Link;
 use crate::main_view::Main;
-use crate::preview::Mode;
+use crate::preview::{Mode, Program};
 
 /// The icon of the program, embedded in the binary.
 const ICON: &[u8] = include_bytes!("../assets/fs-activities.png");
@@ -93,6 +94,19 @@ impl Surface for Home {
     }
 }
 
+/// The symbol of a view in the navigation (characters every font has).
+const fn symbol(view: View) -> &'static str {
+    match view {
+        View::All => "\u{2261}",
+        View::ByMe => "\u{263A}",
+        View::ByOthers => "\u{263B}",
+        View::Program(Program::Texts) => "\u{270E}",
+        View::Program(Program::Files) => "\u{25A4}",
+        View::Program(Program::Calendars) => "\u{25A6}",
+        View::Program(Program::Tasks) => "\u{2713}",
+    }
+}
+
 /// The window for `link`, with the menus whose entries are all locked ("coming soon"); the example of the main view is shown
 /// (`true`) or hidden (`false`, the empty state).
 ///
@@ -120,32 +134,34 @@ pub fn app(texts: &Mf2Texts, link: &Link, example: bool) -> Result<AppWidget, Ap
     } else {
         say("app-name")
     };
-    let widget = AppWidget::new(
-        title,
-        vec![
-            Screen::new("main", say("screen-main"), Arc::new(main)),
-            Screen::new("home", say("screen-start"), page(true, start(texts, link))),
-            Screen::new("coming", say("screen-coming"), page(false, coming(texts))),
-        ],
-    )?;
+    // The navigation on the left: the views of the timeline with a symbol each (the screen list takes text only), then the
+    // start page and "what comes".
+    let mut screens: Vec<Screen> = View::ALL
+        .iter()
+        .map(|view| {
+            let label = format!("{}  {}", symbol(*view), main.title_of(*view));
+            Screen::new(view.id(), label, Arc::new(main.sibling(*view)))
+        })
+        .collect();
+    screens.push(Screen::new(
+        "home",
+        say("screen-start"),
+        page(true, start(texts, link)),
+    ));
+    screens.push(Screen::new(
+        "coming",
+        say("screen-coming"),
+        page(false, coming(texts)),
+    ));
+    let widget = AppWidget::new(title, screens)?;
     let locked = |id: &str| {
         MenuEntry::new(id, format!("{} ({soon})", say(&format!("menu-{id}")))).disabled()
     };
-    // "By me" and "By others" say why they cannot work yet (the source does not deliver who did it): never silently greyed out.
-    let why = say("who-missing");
-    let without_who =
-        |id: &str| MenuEntry::new(id, format!("{} ({why})", say(&format!("menu-{id}")))).disabled();
     widget.set_menus(
-        vec![
-            Menu::new(
-                say("menu-program"),
-                vec![locked("new"), locked("accounts"), locked("search")],
-            ),
-            Menu::new(
-                say("menu-filter"),
-                vec![locked("all"), without_who("mine"), without_who("others")],
-            ),
-        ],
+        vec![Menu::new(
+            say("menu-program"),
+            vec![locked("new"), locked("accounts"), locked("search")],
+        )],
         |_| {},
     )?;
     widget.set_status(Some(Status::Info(say("status-ready"))));

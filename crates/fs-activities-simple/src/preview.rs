@@ -1,14 +1,16 @@
 //! The example data of the main view: typed, never stored, never sent, never in the core, the server or the client.
 //!
 //! The ONLY place of this program that holds example data (a test greps the other sources). The texts of the examples are
-//! `MessageFormat` 2 ids (`example-1` ...), names are "Example A/B/C", never a real person. [`mode`] decides whether the
-//! window shows these rows or what the server delivers: as soon as the server offers the capability `history`, the example
-//! is gone.
+//! `MessageFormat` 2 ids (`example-1` ...), the names are "Example A/B/C", never a real person. Times are minutes before
+//! "now" in UTC; the rows get their time from the clock they are given, so a test can use a fixed one. [`mode`] decides
+//! whether the window shows these rows or what the server delivers: as soon as the server offers the capability `history`,
+//! the example is gone.
 //!
 //! Pattern: Value object (the rows) + Strategy switch (`mode`): the one place that tells example from real.
 
 use fs_components_mf2::Mf2Texts;
-use fs_components_widgets::{CalendarItem, Day, Moment};
+use fs_components_widgets::Glyph;
+use fs_components_words::{Args, Words};
 
 /// Every id of an example row starts with this; a real row never does.
 pub const ID_PREFIX: &str = "preview:";
@@ -16,8 +18,8 @@ pub const ID_PREFIX: &str = "preview:";
 /// The capability whose presence means the server delivers real activities.
 pub const CAPABILITY: &str = "history";
 
-/// Days since 1970-01-01 of the oldest example day, 2026-11-15; the examples span three days.
-const FIRST_DAY: i64 = 20_772;
+/// Minutes in a day.
+pub const DAY: i64 = 1440;
 
 /// Whether the main view shows example data or what the server delivers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -42,7 +44,7 @@ pub enum Program {
 }
 
 impl Program {
-    /// All programs of the example, in the order of the filter.
+    /// All programs of the example, in the order of the navigation.
     pub const ALL: [Program; 4] = [Self::Texts, Self::Files, Self::Calendars, Self::Tasks];
 
     /// The id of the word that names the program.
@@ -55,65 +57,130 @@ impl Program {
             Self::Tasks => "prog-tasks",
         }
     }
-
-    /// The colour step of the timeline (the same program, the same colour).
-    #[must_use]
-    pub const fn category(self) -> u8 {
-        match self {
-            Self::Texts => 0,
-            Self::Files => 1,
-            Self::Calendars => 2,
-            Self::Tasks => 3,
-        }
-    }
 }
 
-/// One example row: when, from which program, and the id of its words.
+/// One example row: how long ago, from which program, with which symbol, and the ids of its words.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Entry {
     /// The id, with [`ID_PREFIX`].
     pub id: &'static str,
-    /// 0 is the oldest example day, 2 the newest.
-    pub day: u8,
-    /// The time of day.
-    pub at: (u16, u16),
+    /// Minutes before now.
+    pub ago: i64,
     /// The program.
     pub program: Program,
-    /// The id of the text.
+    /// The symbol of the kind of event (done, created, changed ...).
+    pub glyph: Glyph,
+    /// The id of the sentence.
     pub text: &'static str,
+    /// The id of the name of the object ("Example A").
+    pub name: &'static str,
 }
-
-/// The twelve example rows over three days; the last one stands for "4 more changes" (a summary).
-pub const ENTRIES: [Entry; 12] = [
-    row("preview:1", 0, (8, 12), Program::Files, "example-1"),
-    row("preview:2", 0, (9, 40), Program::Texts, "example-2"),
-    row("preview:3", 0, (10, 5), Program::Tasks, "example-3"),
-    row("preview:4", 0, (14, 30), Program::Calendars, "example-4"),
-    row("preview:5", 1, (8, 55), Program::Texts, "example-5"),
-    row("preview:6", 1, (11, 20), Program::Tasks, "example-6"),
-    row("preview:7", 1, (13, 0), Program::Files, "example-7"),
-    row("preview:8", 1, (16, 45), Program::Calendars, "example-8"),
-    row("preview:9", 2, (7, 50), Program::Tasks, "example-9"),
-    row("preview:10", 2, (9, 15), Program::Texts, "example-10"),
-    row("preview:11", 2, (10, 30), Program::Files, "example-11"),
-    row("preview:12", 2, (11, 10), Program::Texts, "example-12"),
-];
 
 const fn row(
     id: &'static str,
-    day: u8,
-    at: (u16, u16),
+    ago: i64,
     program: Program,
-    text: &'static str,
+    glyph: Glyph,
+    (text, name): (&'static str, &'static str),
 ) -> Entry {
     Entry {
         id,
-        day,
-        at,
+        ago,
         program,
+        glyph,
         text,
+        name,
     }
 }
+
+/// The twelve example rows: four a few minutes ago, four a day ago, four three days ago; the last one stands for "4 more
+/// changes" (a summary).
+pub const ENTRIES: [Entry; 12] = [
+    row(
+        "preview:1",
+        11,
+        Program::Tasks,
+        Glyph::Check,
+        ("example-1", "example-name-c"),
+    ),
+    row(
+        "preview:2",
+        12,
+        Program::Tasks,
+        Glyph::Plus,
+        ("example-2", "example-name-b"),
+    ),
+    row(
+        "preview:3",
+        13,
+        Program::Calendars,
+        Glyph::Calendar,
+        ("example-3", "example-name-a"),
+    ),
+    row(
+        "preview:4",
+        14,
+        Program::Files,
+        Glyph::Upload,
+        ("example-4", "example-name-a"),
+    ),
+    row(
+        "preview:5",
+        1500,
+        Program::Texts,
+        Glyph::Edit,
+        ("example-5", "example-name-a"),
+    ),
+    row(
+        "preview:6",
+        1560,
+        Program::Calendars,
+        Glyph::Calendar,
+        ("example-6", "example-name-b"),
+    ),
+    row(
+        "preview:7",
+        1600,
+        Program::Files,
+        Glyph::Share,
+        ("example-7", "example-name-c"),
+    ),
+    row(
+        "preview:8",
+        1700,
+        Program::Tasks,
+        Glyph::Plus,
+        ("example-8", "example-name-a"),
+    ),
+    row(
+        "preview:9",
+        4400,
+        Program::Texts,
+        Glyph::Plus,
+        ("example-9", "example-name-c"),
+    ),
+    row(
+        "preview:10",
+        4420,
+        Program::Files,
+        Glyph::Rename,
+        ("example-10", "example-name-b"),
+    ),
+    row(
+        "preview:11",
+        4440,
+        Program::Texts,
+        Glyph::Edit,
+        ("example-11", "example-name-b"),
+    ),
+    row(
+        "preview:12",
+        4460,
+        Program::Texts,
+        Glyph::Edit,
+        ("example-12", "example-name-a"),
+    ),
+];
 
 /// Example or real: [`Mode::Live`] exactly when the capability `history` is among `capabilities` (ids as the server reports
 /// them, with or without a version after a space).
@@ -129,91 +196,72 @@ pub fn mode(capabilities: &[String]) -> Mode {
     }
 }
 
-/// The oldest example day.
+/// Now, in minutes since 1970-01-01 UTC (0 if the clock is before that).
 #[must_use]
-pub fn oldest_day() -> Day {
-    Day::from_number(FIRST_DAY)
+pub fn now_minutes() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()
+        .and_then(|d| i64::try_from(d.as_secs() / 60).ok())
+        .unwrap_or(0)
 }
 
-/// The newest example day (the day marked as today in the timeline).
-#[must_use]
-pub fn newest_day() -> Day {
-    Day::from_number(FIRST_DAY + 2)
+/// A row of the timeline, ready to draw: the sentence, the object name inside it (drawn bold), the time.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Row {
+    /// The id.
+    pub id: String,
+    /// When, in minutes since 1970-01-01 UTC.
+    pub at: i64,
+    /// The program.
+    pub program: Program,
+    /// The symbol of the kind of event.
+    pub glyph: Glyph,
+    /// The whole sentence.
+    pub text: String,
+    /// The name of the object; it stands inside `text`.
+    pub name: String,
+    /// How long ago, relative to the clock the row was made with ("11 min ago").
+    pub age: String,
 }
 
-/// The example rows with their words from `texts`: every item carries the word "Example" and the program as marks, so the
-/// example is told in words on every row, not by colour alone.
+/// How long ago `minutes` were, in words ("just now", "11 min ago", "25 h ago", "3 d ago").
 #[must_use]
-pub fn rows(texts: &Mf2Texts) -> Vec<(Program, CalendarItem)> {
-    let example = texts.plain("example-word");
+pub fn age(texts: &Mf2Texts, minutes: i64) -> String {
+    let say = |id: &str, n: i64| {
+        texts
+            .say(&id.into(), &Args::new().text("n", n.to_string()))
+            .text()
+            .to_owned()
+    };
+    match minutes {
+        ..1 => say("ago-now", 0),
+        1..60 => say("ago-minutes", minutes),
+        60..2880 => say("ago-hours", minutes / 60),
+        _ => say("ago-days", minutes / DAY),
+    }
+}
+
+/// The example rows with their words from `texts`, made at `now` (minutes since 1970-01-01 UTC).
+#[must_use]
+pub fn rows(texts: &Mf2Texts, now: i64) -> Vec<Row> {
     ENTRIES
         .iter()
         .map(|e| {
-            let at = Moment::at(oldest_day().add_days(i64::from(e.day)), e.at.0, e.at.1);
-            let item = CalendarItem::timed(e.id, texts.plain(e.text), at, at)
-                .marked(example.clone())
-                .marked(texts.plain(e.program.word()))
-                .in_category(e.program.category());
-            (e.program, item)
+            let name = texts.plain(e.name);
+            let text = texts
+                .say(&e.text.into(), &Args::new().text("name", name.as_str()))
+                .text()
+                .to_owned();
+            Row {
+                id: e.id.to_owned(),
+                at: now - e.ago,
+                program: e.program,
+                glyph: e.glyph,
+                text,
+                name,
+                age: age(texts, e.ago),
+            }
         })
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{ENTRIES, ID_PREFIX, Mode, Program, mode, newest_day, oldest_day, rows};
-    use crate::words::words;
-    use fs_components_words::Locale;
-
-    fn ids(list: &[&str]) -> Vec<String> {
-        list.iter().map(|s| (*s).to_owned()).collect()
-    }
-
-    #[test]
-    fn no_capability_means_the_example_and_history_means_real_data() {
-        assert_eq!(mode(&[]), Mode::Preview);
-        assert_eq!(mode(&ids(&["files", "calendar"])), Mode::Preview);
-        assert_eq!(mode(&ids(&["history"])), Mode::Live);
-        assert_eq!(mode(&ids(&["files", "history 0.1"])), Mode::Live);
-        // A name that only starts with the word is another capability.
-        assert_eq!(mode(&ids(&["historyx"])), Mode::Preview);
-    }
-
-    #[test]
-    fn the_days_are_what_the_constant_says() {
-        assert_eq!(oldest_day().to_string(), "2026-11-15");
-        assert_eq!(newest_day().to_string(), "2026-11-17");
-    }
-
-    #[test]
-    fn twelve_rows_over_three_days_each_with_words_in_both_languages() {
-        for locale in [Locale::english(), Locale::parse("de").unwrap()] {
-            let texts = words(&locale);
-            let list = rows(&texts);
-            assert_eq!(list.len(), 12);
-            let days: std::collections::BTreeSet<_> =
-                list.iter().map(|(_, i)| i.start.day).collect();
-            assert_eq!(days.len(), 3);
-            for ((_, item), entry) in list.iter().zip(ENTRIES) {
-                assert!(item.key.starts_with(ID_PREFIX));
-                assert_ne!(item.title, entry.text, "the words are missing");
-                assert!(
-                    item.title.contains("Example") || item.title.contains("Beispiel"),
-                    "{}",
-                    item.title
-                );
-                assert_eq!(item.marks.len(), 2, "the word Example and the program");
-            }
-        }
-    }
-
-    #[test]
-    fn every_program_has_rows_and_a_colour_of_its_own() {
-        for program in Program::ALL {
-            assert!(ENTRIES.iter().any(|e| e.program == program));
-        }
-        let colours: std::collections::BTreeSet<_> =
-            Program::ALL.iter().map(|p| p.category()).collect();
-        assert_eq!(colours.len(), Program::ALL.len());
-    }
 }

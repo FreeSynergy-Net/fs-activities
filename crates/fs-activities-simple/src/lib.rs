@@ -25,10 +25,11 @@ mod words;
 
 pub use cli::{Command, HELP, parse};
 pub use content::{blocks, coming, start};
-pub use filter::{Filter, Notice, notice, visible};
+pub use filter::{Notice, View, notice, visible};
 pub use link::Link;
 pub use main_view::Main;
 pub use preview::{CAPABILITY, ENTRIES, Entry, ID_PREFIX, Mode, Program, mode};
+pub use preview::{Row, age, rows};
 pub use run::{EXIT_CONTRACT, run};
-pub use timeline::newest_first;
+pub use timeline::{day_title, newest_first};
 pub use words::{TEXTS, words};

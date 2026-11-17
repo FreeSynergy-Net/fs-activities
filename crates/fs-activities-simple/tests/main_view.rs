@@ -1,12 +1,12 @@
 //! The main view and its example data: the example lives only in `preview.rs`, is switched off as soon as the server offers
-//! real data, and carries the "Preview" marker while it is shown.
+//! real data, carries the "Preview" marker while it is shown, and the views of the navigation narrow it.
 //!
 //! Pattern: example-based tests over the public API, plus one grep over the sources of this crate.
-//! Tests: preview mode, live mode, marker, example only in `preview.rs`.
+//! Tests: preview mode, live mode, marker, views (locked ones), search, example only in `preview.rs`.
 
 use std::path::Path;
 
-use fs_activities_simple::{ENTRIES, Filter, ID_PREFIX, Link, Main, Mode, Notice, Program, words};
+use fs_activities_simple::{ENTRIES, ID_PREFIX, Link, Main, Mode, Notice, Program, View, words};
 use fs_components_words::Locale;
 
 fn main_view(caps: &[&str], example: bool) -> Main {
@@ -20,7 +20,7 @@ fn without_the_capability_the_example_shows_with_the_marker() {
     assert_eq!(view.mode(), Mode::Preview);
     assert_eq!(view.notice(), Some(Notice::Shown));
     assert_eq!(view.items().len(), ENTRIES.len());
-    assert!(view.items().iter().all(|i| i.key.starts_with(ID_PREFIX)));
+    assert!(view.items().iter().all(|i| i.id.starts_with(ID_PREFIX)));
 }
 
 #[test]
@@ -49,21 +49,6 @@ fn a_connected_server_with_history_is_live_and_one_without_is_preview() {
 }
 
 #[test]
-fn the_example_is_there_without_the_capability_and_gone_with_it() {
-    let preview = main_view(&[], true);
-    assert_eq!(preview.mode(), Mode::Preview);
-    assert_eq!(preview.items().len(), 12);
-    assert_eq!(preview.notice(), Some(Notice::Shown));
-    let live = main_view(&["history"], true);
-    assert_eq!(live.mode(), Mode::Live);
-    assert!(
-        live.items().is_empty(),
-        "no example once the server delivers"
-    );
-    assert_eq!(live.notice(), None);
-}
-
-#[test]
 fn hiding_the_example_shows_the_empty_state_and_the_marker_stays() {
     let view = main_view(&[], true);
     view.set_example(false);
@@ -74,25 +59,28 @@ fn hiding_the_example_shows_the_empty_state_and_the_marker_stays() {
 }
 
 #[test]
-fn the_filter_narrows_by_program_and_by_words() {
+fn the_views_narrow_by_program_and_the_who_views_are_locked_with_no_rows() {
+    let all = main_view(&[], true);
+    let texts = all.sibling(View::Program(Program::Texts));
+    assert_eq!(texts.items().len(), 4);
+    assert!(texts.items().iter().all(|r| r.program == Program::Texts));
+    for locked in [View::ByMe, View::ByOthers] {
+        let view = all.sibling(locked);
+        assert!(view.view().locked());
+        assert_eq!(view.items().len(), 0, "{locked:?} has no rows");
+    }
+    assert_eq!(View::ALL.len(), 7, "all, by me, by others, four programs");
+}
+
+#[test]
+fn the_search_is_shared_by_the_screens_and_narrows_by_words() {
     let view = main_view(&[], true);
-    view.set_filter(Filter {
-        program: Some(Program::Texts),
-        query: String::new(),
-    });
-    let texts = view.items();
-    assert_eq!(texts.len(), 4);
-    assert!(texts.iter().all(|i| i.marks.iter().any(|m| m == "Texts")));
-    view.set_filter(Filter {
-        program: None,
-        query: "  FOLDER ".into(),
-    });
+    view.set_query("  FOLDER ");
     assert_eq!(view.items().len(), 1);
-    view.set_filter(Filter {
-        program: Some(Program::Tasks),
-        query: "folder".into(),
-    });
-    assert_eq!(view.items().len(), 0);
+    assert_eq!(view.sibling(View::Program(Program::Files)).items().len(), 1);
+    assert_eq!(view.sibling(View::Program(Program::Tasks)).items().len(), 0);
+    view.set_query("");
+    assert_eq!(view.items().len(), 12);
 }
 
 #[test]
@@ -119,5 +107,5 @@ fn example_data_stand_only_in_preview_rs() {
         );
         checked += 1;
     }
-    assert!(checked >= 8, "only {checked} sources looked at");
+    assert!(checked >= 9, "only {checked} sources looked at");
 }
