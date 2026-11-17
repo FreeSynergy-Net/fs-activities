@@ -1,0 +1,25 @@
+# Release of FreeSynergy Activities on a version tag (fs-release caller, pinned).
+name: release
+on:
+  push: { tags: ["v*"] }
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+  packages: write
+jobs:
+  release:
+    uses: FreeSynergy/fs-release/.github/workflows/release.yml@v0.0.10
+    with:
+      # `fs-activities` holds the server (`fs-activities serve`) and the starter; `fs-activities-simple` is the frontend process.
+      binaries: fs-activities,fs-activities-simple
+      cargo-package: fs-activities-bin
+      ignore-binaries: fs-activities-server
+      name: fs-activities
+      kind: app
+      app-id: net.freesynergy.Activities
+      macos: false
+      windows-targets: ""   # Linux only for now: Unix sockets and Unix paths (Windows and macOS follow)
+    secrets:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

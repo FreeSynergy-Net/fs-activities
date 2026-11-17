@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=FreeSynergy.Activities
+GenericName=Activities
+Comment=What happened in your programs: one local timeline, newest first
+Exec=fs-activities
+Icon=net.freesynergy.Activities
+Terminal=false
+Categories=Utility;

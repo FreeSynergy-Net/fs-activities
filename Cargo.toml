@@ -1,9 +1,21 @@
 [workspace]
 resolver = "2"
-members = ["crates/fs-activities-core", "crates/fs-activities-hub"]
+# The hub adapter is left out of the build for now: its `fs-registry-client` v0.0.2 still pins fs-interfaces v0.0.1 and
+# fs-objects v0.0.1, which gives the tree two sources for one library (check_lock_sources). It comes back with a registry tag on V1+.
+exclude = ["crates/fs-activities-hub"]
+members = [
+    "crates/fs-activities-core",
+    "crates/fs-activities-server",
+    "crates/fs-activities-client",
+    "crates/fs-activities-simple",
+    "crates/fs-activities-bin",
+]
 
 [workspace.package]
-version = "0.0.1"
+version = "0.0.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-rust-version = "1.85"
+authors = ["FreeSynergy <support@freesynergy.net>"]
+repository = "https://github.com/FreeSynergy/fs-activities"
+# fs-rpc and fs-components need 1.89.
+rust-version = "1.89"

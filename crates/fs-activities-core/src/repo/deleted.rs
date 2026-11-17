@@ -14,10 +14,11 @@ use crate::error::Result;
 impl HistoryRepo {
     /// Remember the delete with its time; a late delivery of an older one does not move it back.
     pub(super) async fn mark_deleted(&self, object: ObjectId, at: Timestamp) -> Result<()> {
-        if let Some(old) = self.objects.read_unlogged(object).await? {
-            if old.envelope.object_type == DELETED_TYPE && old.envelope.published >= at {
-                return Ok(());
-            }
+        if let Some(old) = self.objects.read_unlogged(object).await?
+            && old.envelope.object_type == DELETED_TYPE
+            && old.envelope.published >= at
+        {
+            return Ok(());
         }
         let mut env = Envelope::new(DELETED_TYPE, "deleted");
         env.id = object;
@@ -29,10 +30,11 @@ impl HistoryRepo {
 
     /// Only a `Create` newer than the delete brings an object back: a late redelivery does not.
     pub(super) async fn mark_alive(&self, object: ObjectId, at: Timestamp) -> Result<()> {
-        if let Some(old) = self.objects.read_unlogged(object).await? {
-            if old.envelope.object_type == DELETED_TYPE && old.envelope.published < at {
-                self.objects.delete_unlogged(object).await?;
-            }
+        if let Some(old) = self.objects.read_unlogged(object).await?
+            && old.envelope.object_type == DELETED_TYPE
+            && old.envelope.published < at
+        {
+            self.objects.delete_unlogged(object).await?;
         }
         Ok(())
     }

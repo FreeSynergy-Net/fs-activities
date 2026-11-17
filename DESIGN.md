@@ -1,13 +1,13 @@
 # fs-activities – Design
 
 `fs-activities` observes what happens across programs (ADR 0020). This repo holds the **program core**, no GUI. Contract:
-`history.capnp` in `fs-interfaces` v0.20.0 or later (draft, provisional). Program docs: `fs-documentation/docs/en/programs/apps/activities/`.
+`history.capnp` in `fs-interfaces` v0.0.27 (draft 0.1, not locked). Program docs: `fs-documentation/docs/en/programs/apps/activities/`.
 
 The repo and crates were renamed from `fs-history` to `fs-activity` and then to `fs-activities` (ADR 0087, plural rule), but types and contract keep the name "history" (`HistoryRepo`, `History`, `history.capnp`, capability IDs `history.*`, `PROGRAM = "history"`, MIME `vnd.freesynergy.history-*`): these names are part of the wire contract in `fs-interfaces` and other programs depend on them, so behaviour towards the outside stays the same and changing them needs its own decision.
 
 ## State
 
-Version 0.1.1. No capnp server and no GUI.
+Version 0.0.2 (the version of the tag; earlier texts said 0.1.1). A capnp server and a window exist as basics (see "The basics" below); the core is not wired to the server yet.
 
 | Area | State |
 |---|---|
@@ -19,7 +19,7 @@ Version 0.1.1. No capnp server and no GUI.
 | Actor | empty; `originalActor` stays empty until the person releases it (strategy, in `hub.capnp`) |
 | Original time | receive time for now; `originalAt` comes with the next fs-registry tag |
 | A dead hub session | not reconnected; the host starts a new one |
-| capnp server | not built; thread 3 |
+| capnp server | basics only: `capabilities` and `supportReport`, see "The basics" |
 | Tests | 49, real stores and a real hub, the 80 MiB test included |
 
 Checked by an independent reviewer over three rounds; the last found one small error, fixed in 0.1.1 with a test.
@@ -58,3 +58,27 @@ A pure function: entries newest first → grouped when object and program are eq
 
 ### Not built
 Telemetry import (OpenTelemetry not read), time tracking derived from history, sharing and group views. They have no contract method yet.
+
+## The basics (0.0.2, workflow `grundfassung`)
+
+Engine and frontend are separate processes (ADR 0021, ADR 0094 draft). Pattern map (ADR 0043):
+
+| Crate | Role | Pattern |
+|---|---|---|
+| `fs-activities-server` | `history.capnp` 0.1 over a local socket (`fs-rpc` v0.0.2); `capabilities` (a `CapabilityList`: no ids, the contract version `0.1`, named by the server because the core has none) and `supportReport`; the rest is `unimplemented` | Adapter |
+| `fs-activities-client` | `Hello::fetch`: handshake (`Control.version`, replace a server that differs), `capabilities`, contract check | Template method |
+| `fs-activities-simple` | frontend `simple`, a process; depends only on the client and fs-components v0.0.25; window = name, icon, what works today, what comes (all locked, "coming soon") | Adapter, Builder |
+| `fs-activities-bin` | command `fs-activities`: starter (server, `--check`, fallback to `simple`), `serve`, `--version`, `--help` | Facade, Strategy |
+
+Contract rule (ADR 0094 draft, item 4): same main level, minor level of the server not lower; a frontend exits with 3 and a message when it does not fit; the starter says so and opens the standard frontend. Not done, on purpose: no wiring of the core to the server (the window shows no timeline), no lease (the server runs until stopped or replaced). Contract: draft (`history.capnp`, not locked). The basics are released with this draft contract. The name `activities.capnp` does not exist in `fs-interfaces` v0.0.27: the contract file is `history.capnp` (interface `History`, capability key `history`).
+
+Decisions for the window (owner, 2026-11-17): the filter "By me / By others" is wanted; as long as the hub does not deliver who did it, it says openly "The source does not yet deliver who it was" (menu entry with the reason, never silently greyed out). The feed of the own timeline is Atom (the standard), opt-in, stage "later".
+
+### Gaps (components that do not exist yet; the nearest existing one stands in, marked "provisional")
+
+- Timeline widget (day groups, loading more): provisional a text list of the shared text view.
+- Date-range picker: provisional none; the period filter is listed under "what comes".
+- Command model, shortcuts, context menu, tree for summaries (PLAN-components-menue M1 to M5): provisional locked menu entries with a reason.
+- Calendar heat map (later): none.
+- Error text of a missing server comes from `fs-rpc` in English: known, provisional.
+- Hub: `fs-activities-hub` is excluded from the workspace (`exclude` in `Cargo.toml`): `fs-registry-client` v0.0.2, the newest tag, still pins fs-interfaces v0.0.1 and fs-objects v0.0.1 (two sources per library, check_lock_sources red). It returns to the workspace with a registry tag that pins the current libraries; the basics do not use it.
