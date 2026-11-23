@@ -74,6 +74,7 @@ async fn a_bare_log_only_verb_of_a_removed_object_stays_out() {
 }
 
 #[tokio::test]
+// The texts searched for must contain a letter outside 0-9a-f: the tombstone holds hex hashes, and the bare word "ada" is all hex letters and turns up in one by chance, so the whole "people/ada" is searched.
 async fn filter_texts_are_not_readable_in_the_tombstone() {
     let (repo, store) = setup().await;
     repo.record(vec![act(1, 100, "Create", 1)]).await.unwrap();
@@ -93,7 +94,7 @@ async fn filter_texts_are_not_readable_in_the_tombstone() {
             .unwrap(),
     )
     .unwrap();
-    for text in ["work", "calendar", "ada", "Event", "event"] {
+    for text in ["work", "calendar", "people/ada", "Event", "event"] {
         assert!(!raw.contains(text), "{text} is readable in {raw}");
     }
     // Sealed, but it still works on the hash.
